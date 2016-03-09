@@ -12,6 +12,44 @@
 
     <runtime>
         <library name="umlToOwl.jar"/>
-		<library name="owlapi-osgidistribution-4.1.0.jar"/>
+		<library name="libs/owlapi-osgidistribution-4.0.2.jar"/>
+		<library name="libs/sesame-model-2.7.12.jar"/>
+		<library name="libs/sesame-util-2.7.12.jar"/>
+		<library name="libs/sesame-rio-api-2.7.12.jar"/>
+		<library name="libs/sesame-rio-languages-2.7.12.jar"/>
+		<library name="libs/sesame-rio-datatypes-2.7.12.jar"/>
+		<library name="libs/sesame-rio-binary-2.7.12.jar"/>
+		<library name="libs/sesame-rio-n3-2.7.12.jar"/>
+		<library name="libs/sesame-rio-nquads-2.7.12.jar"/>
+		<library name="libs/commons-io-2.4.jar"/>
+		<library name="libs/sesame-rio-ntriples-2.7.12.jar"/>
+		<library name="libs/sesame-rio-rdfjson-2.7.12.jar"/>
+		<library name="libs/jackson-core-2.2.1.jar"/>
+		<library name="libs/sesame-rio-rdfxml-2.7.12.jar"/>
+		<library name="libs/sesame-rio-trix-2.7.12.jar"/>
+		<library name="libs/sesame-rio-turtle-2.7.12.jar"/>
+		<library name="libs/sesame-rio-trig-2.7.12.jar"/>
+		<library name="libs/jsonld-java-sesame-0.5.0.jar"/>
+		<library name="libs/jsonld-java-0.5.0.jar"/>
+		<library name="libs/jackson-databind-2.3.3.jar"/>
+		<library name="libs/jackson-annotations-2.3.0.jar"/>
+		<library name="libs/httpclient-cache-4.2.5.jar"/>
+		<library name="libs/httpclient-4.2.5.jar"/>
+		<library name="libs/httpcore-4.2.4.jar"/>
+		<library name="libs/commons-codec-1.6.jar"/>
+		<library name="libs/jcl-over-slf4j-1.7.7.jar"/>
+		<library name="libs/semargl-sesame-0.6.1.jar"/>
+		<library name="libs/semargl-core-0.6.1.jar"/>
+		<library name="libs/semargl-rdfa-0.6.1.jar"/>
+		<library name="libs/semargl-rdf-0.6.1.jar"/>
+		<library name="libs/guava-18.0.jar"/>
+		<library name="libs/guice-4.0-beta.jar"/>
+		<library name="libs/javax.inject-1.jar"/>
+		<library name="libs/aopalliance-1.0.jar"/>
+		<library name="libs/guice-multibindings-4.0-beta.jar"/>
+		<library name="libs/jsr305-2.0.1.jar"/>
+		<library name="libs/slf4j-api-1.7.7.jar"/>
+		<library name="libs/org.apache.commons.io-2.4.jar"/>
+		<library name="libs/trove4j-3.0.3.jar"/>
     </runtime>
 </plugin>
