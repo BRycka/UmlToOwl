@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin
+        id="umlToOwlPlugin"
+        name="UmlToOwl"
+        version="1.0"
+        provider-name="BRycka"
+        class="umlToOwlPlugin.UmlToOwlPlugin">
+
+    <requires>
+        <api version="1.2"/>
+    </requires>
+
+    <runtime>
+        <library name="umlToOwl.jar"/>
+		<library name="owlapi-osgidistribution-4.1.0.jar"/>
+    </runtime>
+</plugin>
