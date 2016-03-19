@@ -36,6 +36,7 @@ import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
@@ -50,10 +51,12 @@ public class UmlToOwlAction extends MDAction {
 	private static final long serialVersionUID = 1L;
 	
 	private OwlAPI OwlApi;
-	
-	private OWLOntology myOntology;
-	private OutputStream os;
-	
+
+	/**
+	 * 
+	 * @param id
+	 * @param name
+	 */
 	public UmlToOwlAction(String id, String name) {
 		super(id, name, null, null);
 	}
@@ -61,14 +64,14 @@ public class UmlToOwlAction extends MDAction {
 	public void actionPerformed(ActionEvent e) {
 		Project p = Application.getInstance().getProjectsManager().getActiveProject(); // get active project
 		if (p != null) {
-			/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Model: " + p.getPrimaryModel().getName());
+			/* Debug */ //JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Model: " + p.getPrimaryModel().getName());
 			Collection<Package> nestedPackage = p.getPrimaryModel().getNestedPackage(); // get collection of all packages in the project
 			boolean packageExist = false; // by default package does not exist
 			for (Iterator<Package> iterator = nestedPackage.iterator(); iterator.hasNext();) { // loop through all packages
 				Package package1 = (Package) iterator.next();
 				if (StereotypesHelper.isElementStereotypedBy(package1, "OWL2 ontology"))
 				{	
-					/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Package name: " + package1.getName());
+					/* Debug */ //JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Package name: " + package1.getName());
 					packageExist = true; // package found so set packageExist as true
 					String ontoIRI = getTagValue(package1, "OWL2 ontology", "ontology IRI"); // get IRI of current package
 					try {
@@ -82,9 +85,19 @@ public class UmlToOwlAction extends MDAction {
 						Element element = (Element) iterator2.next();
 						if (element instanceof Class)
 						{
-							/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "This is class - '" + ((Class) element).getName() + "' - IRI: " + getTagValue(element, "OWL2Entity","EntityIRI"));
-							OwlApi.exportClass(getTagValue(element, "OWL2Entity","EntityIRI"));
-//							exportClassAttributes((Class) element);
+							/* Debug */ //JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "This is class - '" + ((Class) element).getName() + "' - IRI: " + getTagValue(element, "OWL2Entity","EntityIRI"));
+							
+							if (isSubClass((Class) element)) {
+								// export as subclass
+								// tëvinë klasë iðeksportuojama kartu su sub klasëm, todël nereikia jos eksportuoti atskirai
+								Collection<Class> superClass = ((Class) element).getSuperClass();
+								for (Class supClass : superClass) {
+									OwlApi.exportSubClass(getTagValue(element, "OWL2Entity","EntityIRI"), getTagValue(supClass, "OWL2Entity","EntityIRI")); 
+								}
+							} else {
+								// export as parent class
+//								OwlApi.exportClass(getTagValue(element, "OWL2Entity","EntityIRI"));
+							}
 								
 						}
 						else if (element instanceof Association)
@@ -93,7 +106,7 @@ public class UmlToOwlAction extends MDAction {
 						}
 					}
 					
-					OwlApi.saveOnto();
+					OwlApi.saveOnto("functionalSyntax");
 				}
 			}
 			if (packageExist == false) {
@@ -105,12 +118,21 @@ public class UmlToOwlAction extends MDAction {
 		}		
 	}
 	
+	/**
+	 * 
+	 * @param c1
+	 */
 	private void exportClassAttributes(Class c1) {
 		List<Property> attribute = c1.getAttribute();
 		
 	}
 	
-	private boolean isSubclass(Class c1) {
+	/**
+	 * 
+	 * @param c1
+	 * @return
+	 */
+	private boolean isSubClass(Class c1) {
 		Collection<Classifier> general = c1.getGeneral();
 		if (general.isEmpty()) {
 			return false;
@@ -119,6 +141,13 @@ public class UmlToOwlAction extends MDAction {
 		return true;
 	}
 	
+	/**
+	 * 
+	 * @param e
+	 * @param sterotypeName
+	 * @param tagName
+	 * @return
+	 */
 	private String getTagValue(Element e, String sterotypeName, String tagName) {
 		String result = "";
 		Project project = Project.getProject(e); // find a profile
