@@ -9,12 +9,14 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -96,6 +98,18 @@ public class OwlAPI {
 		OWLDataPropertyRangeAxiom rangeAxiom = factory.getOWLDataPropertyRangeAxiom(dProperty, factory.getOWLDatatype(IRI.create(range)));
 		manager.addAxiom(ontology, rangeAxiom);
 		manager.addAxiom(ontology, domainAxiom);
+	}
+	
+	/**
+	 * Add sub data property of to ontology
+	 * @param subsettedProperty
+	 * @param attributeName
+	 */
+	public void exportSubDataPropertyOf(String subsettedProperty, String attributeName) {
+		OWLDataPropertyExpression subProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + attributeName));
+		OWLDataPropertyExpression superProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + subsettedProperty));
+		OWLSubDataPropertyOfAxiom axiom = factory.getOWLSubDataPropertyOfAxiom(subProperty, superProperty);
+		manager.addAxiom(ontology, axiom);
 	}
 	
 	/**

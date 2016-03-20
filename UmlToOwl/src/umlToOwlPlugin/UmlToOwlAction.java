@@ -150,9 +150,23 @@ public class UmlToOwlAction extends MDAction {
 					String range = attribute.getType().getName();
 					String domain = getTagValue(attribute.getOwner(), Stereotypes.OWL_ENTITY, "EntityIRI");
 					OwlApi.exportDataProperty(attributeName, range, domain);
+					if (!attribute.has_propertyOfSubsettedProperty()) {
+						exportSubsettedProperty(attribute);
+					}
 				}
 			}
 		}		
+	}
+	
+	/**
+	 * 
+	 * @param attribute
+	 */
+	private void exportSubsettedProperty(Property attribute) {
+		Collection<Property> subsettedProperties = attribute.getSubsettedProperty();
+		for (Property subsettedProperty : subsettedProperties) {
+			OwlApi.exportSubDataPropertyOf(subsettedProperty.getName(), attribute.getName());
+		}
 	}
 	
 	/**
