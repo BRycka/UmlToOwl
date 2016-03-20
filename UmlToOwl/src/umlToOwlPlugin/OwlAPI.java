@@ -7,6 +7,10 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
+//import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -38,7 +42,7 @@ public class OwlAPI {
 	}
 	
 	/**
-	 * set up required environment
+	 * Set up required environment
 	 * 
 	 * @param ontologyIRI
 	 * @param saveTo
@@ -54,7 +58,7 @@ public class OwlAPI {
 	}
 	
 	/**
-	 * add class IRI to ontology
+	 * Add class declaration to ontology
 	 * 
 	 * @param classIRI
 	 */
@@ -66,6 +70,12 @@ public class OwlAPI {
 		manager.addAxiom(ontology, axiom);
 	}
 	
+	/**
+	 * Add subclass declaration to ontology
+	 * 
+	 * @param childIRI
+	 * @param parentIRI
+	 */
 	public void exportSubClass(String childIRI, String parentIRI) {
 		OWLClass childClass = factory.getOWLClass(IRI.create(childIRI));
 		OWLClass parentClass = factory.getOWLClass(IRI.create(parentIRI));
@@ -75,7 +85,22 @@ public class OwlAPI {
 	}
 	
 	/**
-	 * save ontology to file
+	 * Add data property to ontology (range & domain)
+	 * 
+	 * @param attributeName
+	 * @param range
+	 * @param domain
+	 */
+	public void exportDataProperty(String attributeName, String range, String domain) {
+		OWLDataProperty dProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + attributeName));
+		OWLDataPropertyDomainAxiom domainAxiom = factory.getOWLDataPropertyDomainAxiom(dProperty, factory.getOWLClass(IRI.create(domain)));
+		OWLDataPropertyRangeAxiom rangeAxiom = factory.getOWLDataPropertyRangeAxiom(dProperty, factory.getOWLDatatype(IRI.create(range)));
+		manager.addAxiom(ontology, rangeAxiom);
+		manager.addAxiom(ontology, domainAxiom);
+	}
+	
+	/**
+	 * Save ontology to file
 	 */
 	public void saveOnto(String fileFormat) {
 		switch (fileFormat) {
