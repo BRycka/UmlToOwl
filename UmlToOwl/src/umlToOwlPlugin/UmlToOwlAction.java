@@ -68,11 +68,11 @@ public class UmlToOwlAction extends MDAction {
 			boolean packageExist = false; // by default package does not exist
 			for (Iterator<Package> iterator = nestedPackage.iterator(); iterator.hasNext();) { // loop through all packages
 				Package package1 = (Package) iterator.next();
-				if (StereotypesHelper.isElementStereotypedBy(package1, Constants.ONTOLOGY_STEREOTYPE))
+				if (StereotypesHelper.isElementStereotypedBy(package1, Stereotypes.OWL_ONTOLOGY))
 				{	
 					/* Debug */ //JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Package name: " + package1.getName());
 					packageExist = true; // package found so set packageExist as true
-					String ontoIRI = getTagValue(package1, Constants.ONTOLOGY_STEREOTYPE, "ontology IRI"); // get IRI of current package
+					String ontoIRI = getTagValue(package1, Stereotypes.OWL_ONTOLOGY, "ontology IRI"); // get IRI of current package
 					try {
 						OwlApi = new OwlAPI(ontoIRI, Constants.PATH_SAVE_TO);
 					} catch (OWLOntologyCreationException e1) {
@@ -90,7 +90,7 @@ public class UmlToOwlAction extends MDAction {
 								// export as a subclass
 								Collection<Class> superClass = ((Class) element).getSuperClass();
 								for (Class supClass : superClass) {
-									OwlApi.exportSubClass(getTagValue(element, "OWL2Entity","EntityIRI"), getTagValue(supClass, "OWL2Entity","EntityIRI")); 
+									OwlApi.exportSubClass(getTagValue(element, Stereotypes.OWL_ENTITY, "EntityIRI"), getTagValue(supClass, Stereotypes.OWL_ENTITY, "EntityIRI")); 
 								}
 							} else {
 								/**
@@ -122,7 +122,7 @@ public class UmlToOwlAction extends MDAction {
 	/**
 	 * 
 	 * @param element
-	 * @return
+	 * @return Boolean
 	 */
 	private boolean isSubClass(Class element) {
 		Collection<Classifier> general = element.getGeneral();
@@ -133,33 +133,26 @@ public class UmlToOwlAction extends MDAction {
 		return true;
 	}
 	
-	
 	/**
 	 * 
 	 * @param element
-	 * @return 
+	 * @param stereotypeName - attribute stereotype
 	 */
 	private void exportClassAttributes(Class element, String stereotypeName) {
 		// range - type, domain - owner
-		Project project = Project.getProject(element); // find a profile
-		Profile profile = StereotypesHelper.getProfile(project, Constants.PROFILE);
-		try {
-			Stereotype stereotype = StereotypesHelper.getStereotype(project, stereotypeName, profile); // find a stereotype
-		} catch(Exception e) {
-			/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "stereotype: " + stereotypeName + " is invalid");
-		}
-		
-		List<Property> attributes = element.getOwnedAttribute();
-		for (int k = 0; k < attributes.size(); ++k)
-		{
-			Property attribute = attributes.get(k);
-			if (StereotypesHelper.isElementStereotypedBy(attribute, stereotypeName)) {
-				String attributeName = attribute.getName();
-				String range = attribute.getType().getName();
-				String domain = getTagValue(attribute.getOwner(), "OWL2Entity", "EntityIRI");
-				OwlApi.exportDataProperty(attributeName, range, domain);
+		if (getStereotype((Element) element, stereotypeName) != null) {
+			List<Property> attributes = element.getOwnedAttribute();
+			for (int k = 0; k < attributes.size(); ++k)
+			{
+				Property attribute = attributes.get(k);
+				if (StereotypesHelper.isElementStereotypedBy(attribute, stereotypeName)) {
+					String attributeName = attribute.getName();
+					String range = attribute.getType().getName();
+					String domain = getTagValue(attribute.getOwner(), Stereotypes.OWL_ENTITY, "EntityIRI");
+					OwlApi.exportDataProperty(attributeName, range, domain);
+				}
 			}
-		}
+		}		
 	}
 	
 	/**
@@ -167,22 +160,40 @@ public class UmlToOwlAction extends MDAction {
 	 * @param e
 	 * @param sterotypeName
 	 * @param tagName
-	 * @return
+	 * @return String
 	 */
 	private String getTagValue(Element e, String stereotypeName, String tagName) {
 		String result = "";
-		Project project = Project.getProject(e); // find a profile
-		Profile profile = StereotypesHelper.getProfile(project, Constants.PROFILE);
-		Stereotype stereotype = StereotypesHelper.getStereotype(project, stereotypeName, profile); // find a stereotype
-		if (!StereotypesHelper.isElementStereotypedBy(e, stereotypeName)) {
-			return "Stereotype named '" + stereotypeName + "' was not found in '" + e.getHumanName() + "'";
+		Stereotype stereotype = getStereotype(e, stereotypeName);
+		if (stereotype != null) {
+			if (!StereotypesHelper.isElementStereotypedBy(e, stereotypeName)) {
+				return "Stereotype named '" + stereotypeName + "' was not found in '" + e.getHumanName() + "'";
+			}
+			@SuppressWarnings("rawtypes")
+			List value = StereotypesHelper.getStereotypePropertyValue(e, stereotype, tagName);
+			for (int k = 0; k < value.size(); ++k)
+			{
+				result = (String) value.get(k); // a tag value
+			}
 		}
-		@SuppressWarnings("rawtypes")
-		List value = StereotypesHelper.getStereotypePropertyValue(e, stereotype, tagName);
-		for (int k = 0; k < value.size(); ++k)
-		{
-			result = (String) value.get(k); // a tag value
-		}
+		
 		return result;
+	}
+	
+	/**
+	 * Get stereotype from profile if it exist there, if not return null
+	 * @param element
+	 * @param stereotypeName
+	 * @return Stereotype
+	 */
+	private Stereotype getStereotype(Element element, String stereotypeName) {
+		Project project = Project.getProject(element); // find a profile
+		Profile profile = StereotypesHelper.getProfile(project, Constants.PROFILE);
+		try {
+			return StereotypesHelper.getStereotype(project, stereotypeName, profile); // find a stereotype
+		} catch(Exception e) {
+			/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "stereotype: " + stereotypeName + " was not fount in '" + Constants.PROFILE + "'");
+			return null;
+		}
 	}
 }
