@@ -1,11 +1,16 @@
 package umlToOwlPlugin;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import javax.swing.JOptionPane;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
@@ -59,7 +64,7 @@ public class OwlAPI {
 	}
 	
 	/**
-	 * Add class declaration to ontology
+	 * Export class declaration
 	 * 
 	 * @param classIRI
 	 */
@@ -72,7 +77,7 @@ public class OwlAPI {
 	}
 	
 	/**
-	 * Add subclass declaration to ontology
+	 * Export sub class of declaration
 	 * 
 	 * @param childIRI
 	 * @param parentIRI
@@ -86,7 +91,7 @@ public class OwlAPI {
 	}
 	
 	/**
-	 * Add data property to ontology (range & domain)
+	 * Export data property (range & domain)
 	 * 
 	 * @param attributeName
 	 * @param range
@@ -101,7 +106,7 @@ public class OwlAPI {
 	}
 	
 	/**
-	 * Add sub data property of to ontology
+	 * Export sub data property of
 	 * @param subsettedProperty
 	 * @param attributeName
 	 */
@@ -113,7 +118,21 @@ public class OwlAPI {
 	}
 	
 	/**
-	 * Save ontology to file
+	 * Export disjoint union of
+	 * @param classIRI
+	 * @param classes
+	 */
+	public void exportDisJOintUnion(String classIRI, Collection<String> classes) {
+		Set<OWLClassExpression> disjoinClassesSet = new LinkedHashSet<>();
+		for (String classifier : classes) {
+			disjoinClassesSet.add(factory.getOWLClass(IRI.create(classifier)));
+		}
+		OWLClass mainClass = factory.getOWLClass(IRI.create(classIRI));
+		manager.addAxiom(ontology, factory.getOWLDisjointUnionAxiom(mainClass, disjoinClassesSet));
+	}
+	
+	/**
+	 * Save ontology to file and show success message or error message
 	 */
 	public void saveOnto(String fileFormat) {
 		switch (fileFormat) {
@@ -127,9 +146,9 @@ public class OwlAPI {
 		}
 		try {
 			manager.saveOntology(ontology, documentIRI);
-			/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Ontology successfully saved!");
+			JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Ontology successfully saved!");
 		} catch (OWLOntologyStorageException e) {
-			/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "error - " + e);
+			JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "error - " + e);
 		}
 	}
 }

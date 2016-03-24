@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +40,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdpowertypes.GeneralizationSet;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -99,11 +101,36 @@ public class UmlToOwlAction extends MDAction {
 								// OwlApi.exportClass(getTagValue(element, "OWL2Entity","EntityIRI"));
 							}
 							
+							// export disjoint union
+							if (((Class) element).hasGeneralization()) {
+								Collection<Generalization> generalizations = ((Class) element).getGeneralization();
+								for (Generalization generalization : generalizations) {
+									
+									if (hasSubClassStereotype( generalization)) {
+										if (generalization.hasGeneralizationSet()) {
+											Collection<GeneralizationSet> generalizationSet = generalization.getGeneralizationSet();
+											for (GeneralizationSet generalizationSet2 : generalizationSet) {
+												if (StereotypesHelper.hasStereotypeOrDerived(generalizationSet2, Stereotypes.PRIMITIVE)) {
+													if (generalizationSet2.isDisjoint()) {
+														ArrayList<String> disjointClasses= new ArrayList<String>();
+														Classifier general = null;
+														for (Generalization gen : generalizationSet2.getGeneralization()) {
+															String classIRI = getTagValue(gen.getSpecific(), Stereotypes.OWL_ENTITY, "EntityIRI");
+															disjointClasses.add(classIRI);
+															general = gen.getGeneral();
+														};
+														OwlApi.exportDisJOintUnion(getTagValue(general, Stereotypes.OWL_ENTITY, "EntityIRI"), disjointClasses);
+													}
+												}
+											}
+										}										
+								}}
+							}
 							exportClassAttributes((Class) element, "DataProperty");
 						}
 						else if (element instanceof Association)
 						{
-							
+
 						}
 					}
 					
@@ -131,6 +158,16 @@ public class UmlToOwlAction extends MDAction {
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * 
+	 * @param element
+	 * @return
+	 */
+	private boolean hasSubClassStereotype(Generalization element) {
+		return StereotypesHelper.hasStereotypeOrDerived(element, Stereotypes.SUB_CLASS_OF);
+		
 	}
 	
 	/**
