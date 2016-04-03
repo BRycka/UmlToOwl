@@ -17,11 +17,17 @@ import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
+import org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -106,7 +112,23 @@ public class OwlAPI {
 	}
 	
 	/**
+	 * Export object property (range & domain)
+	 * 
+	 * @param propertyName
+	 * @param range
+	 * @param domain
+	 */
+	public void exportObjectProperty(String propertyName, String range, String domain) {
+		OWLObjectProperty oProperty = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + propertyName));
+		OWLObjectPropertyDomainAxiom domainAxiom = factory.getOWLObjectPropertyDomainAxiom(oProperty, factory.getOWLClass(IRI.create(domain)));
+		OWLObjectPropertyRangeAxiom rangeAxiom = factory.getOWLObjectPropertyRangeAxiom(oProperty, factory.getOWLClass(IRI.create(range)));
+		manager.addAxiom(ontology, rangeAxiom);
+		manager.addAxiom(ontology, domainAxiom);
+	}
+	
+	/**
 	 * Export sub data property of
+	 * 
 	 * @param subsettedProperty
 	 * @param attributeName
 	 */
@@ -114,6 +136,19 @@ public class OwlAPI {
 		OWLDataPropertyExpression subProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + attributeName));
 		OWLDataPropertyExpression superProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + subsettedProperty));
 		OWLSubDataPropertyOfAxiom axiom = factory.getOWLSubDataPropertyOfAxiom(subProperty, superProperty);
+		manager.addAxiom(ontology, axiom);
+	}
+	
+	/**
+	 * Export sub object property of
+	 * 
+	 * @param subsettedProperty
+	 * @param attributeName
+	 */
+	public void exportSubObjectPropertyOf(String subsettedProperty, String attributeName) {
+		OWLObjectPropertyExpression subProperty = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + attributeName));
+		OWLObjectPropertyExpression superProperty = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + subsettedProperty));
+		OWLSubObjectPropertyOfAxiom axiom = factory.getOWLSubObjectPropertyOfAxiom(subProperty, superProperty);
 		manager.addAxiom(ontology, axiom);
 	}
 	
@@ -129,6 +164,19 @@ public class OwlAPI {
 		}
 		OWLClass mainClass = factory.getOWLClass(IRI.create(classIRI));
 		manager.addAxiom(ontology, factory.getOWLDisjointUnionAxiom(mainClass, disjoinClassesSet));
+	}
+	
+	/**
+	 * Export inverse object properties
+	 * 
+	 * @param forwardProperty
+	 * @param inverseProperty
+	 */
+	public void exportInverseObjectProperties(String forwardProperty, String inverseProperty ) {
+		OWLObjectProperty forward = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + forwardProperty));
+		OWLObjectProperty inverse = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + inverseProperty));
+		OWLInverseObjectPropertiesAxiom axiom = factory.getOWLInverseObjectPropertiesAxiom(forward, inverse);
+		manager.addAxiom(ontology, axiom);
 	}
 	
 	/**

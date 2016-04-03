@@ -38,6 +38,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdpowertypes.GeneralizationSet;
@@ -127,6 +128,24 @@ public class UmlToOwlAction extends MDAction {
 								}}
 							}
 							exportClassAttributes((Class) element, "DataProperty");
+							exportObjectProperties((Class) element, "ObjectProperty");
+							
+							/**
+							 * inverse object properties in progress
+							 */
+							if (((Class) element).has_associationOfEndType()) {
+								Collection<Association> associations = ((Class) element).get_associationOfEndType();
+								for (Association association : associations) {
+									Collection<NamedElement> members = association.getMember();
+									for (NamedElement namedElement : members) {
+										/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "asociacija " + namedElement.getName());
+									}
+								}
+							}
+							// @TODO - export inverse object properties
+//							Association association = attribute.getAssociation();
+//							/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "");
+//							OwlApi.exportInverseObjectProperties(attributeName, attributeName + "2");
 						}
 						else if (element instanceof Association)
 						{
@@ -188,7 +207,7 @@ public class UmlToOwlAction extends MDAction {
 					String domain = getTagValue(attribute.getOwner(), Stereotypes.OWL_ENTITY, "EntityIRI");
 					OwlApi.exportDataProperty(attributeName, range, domain);
 					if (!attribute.has_propertyOfSubsettedProperty()) {
-						exportSubsettedProperty(attribute);
+						exportSubsettedDataProperty(attribute);
 					}
 				}
 			}
@@ -199,10 +218,45 @@ public class UmlToOwlAction extends MDAction {
 	 * 
 	 * @param attribute
 	 */
-	private void exportSubsettedProperty(Property attribute) {
+	private void exportSubsettedDataProperty(Property attribute) {
 		Collection<Property> subsettedProperties = attribute.getSubsettedProperty();
 		for (Property subsettedProperty : subsettedProperties) {
 			OwlApi.exportSubDataPropertyOf(subsettedProperty.getName(), attribute.getName());
+		}
+	}
+	
+	/**
+	 * 
+	 * @param element
+	 * @param stereotypeName - attribute stereotype
+	 */
+	private void exportObjectProperties(Class element, String stereotypeName) {
+		if (getStereotype((Element) element, stereotypeName) != null) {
+			List<Property> properties = element.getOwnedAttribute();
+			for (int k = 0; k < properties.size(); ++k)
+			{
+				Property property = properties.get(k);
+				if (StereotypesHelper.isElementStereotypedBy(property, stereotypeName)) {
+					String propertyName = property.getName();
+					String range = property.getType().getName();
+					String domain = getTagValue(property.getOwner(), Stereotypes.OWL_ENTITY, "EntityIRI");
+					OwlApi.exportObjectProperty(propertyName, range, domain);
+					if (!property.has_propertyOfSubsettedProperty()) {
+						exportSubsettedObjectProperty(property);
+					}
+				}
+			}
+		}		
+	}
+	
+	/**
+	 * 
+	 * @param property
+	 */
+	private void exportSubsettedObjectProperty(Property property) {
+		Collection<Property> subsettedProperties = property.getSubsettedProperty();
+		for (Property subsettedProperty : subsettedProperties) {
+			OwlApi.exportSubObjectPropertyOf(subsettedProperty.getName(), property.getName());
 		}
 	}
 	
