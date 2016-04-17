@@ -28,6 +28,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
 import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -75,7 +76,6 @@ public class OwlAPI {
 	 * @param classIRI
 	 */
 	public void exportClass(String classIRI) {
-		/* Debug */ //JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Class IRI from exportClass: " + classIRI);		
 		OWLClass owlClass = factory.getOWLClass(IRI.create(classIRI));
 		
 		OWLDeclarationAxiom axiom = factory.getOWLDeclarationAxiom(owlClass);
@@ -106,7 +106,7 @@ public class OwlAPI {
 	public void exportDataProperty(String attributeName, String range, String domain) {
 		OWLDataProperty dProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + attributeName));
 		OWLDataPropertyDomainAxiom domainAxiom = factory.getOWLDataPropertyDomainAxiom(dProperty, factory.getOWLClass(IRI.create(domain)));
-		OWLDataPropertyRangeAxiom rangeAxiom = factory.getOWLDataPropertyRangeAxiom(dProperty, factory.getOWLDatatype(IRI.create(range)));
+		OWLDataPropertyRangeAxiom rangeAxiom = factory.getOWLDataPropertyRangeAxiom(dProperty, factory.getOWLDatatype("xsd:" + range, new DefaultPrefixManager()));
 		manager.addAxiom(ontology, rangeAxiom);
 		manager.addAxiom(ontology, domainAxiom);
 	}
@@ -194,7 +194,7 @@ public class OwlAPI {
 		}
 		try {
 			manager.saveOntology(ontology, documentIRI);
-			JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Ontology successfully saved!");
+			JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "Ontology successfully saved! Path: " + Constants.PATH_SAVE_TO);
 		} catch (OWLOntologyStorageException e) {
 			JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "error - " + e);
 		}

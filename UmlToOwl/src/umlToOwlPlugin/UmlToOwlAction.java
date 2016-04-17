@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JOptionPane;
+import javax.swing.plaf.metal.MetalMenuBarUI;
 
 import umlToOwlPlugin.OwlAPI;
 
@@ -34,6 +35,7 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
+import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -136,16 +138,12 @@ public class UmlToOwlAction extends MDAction {
 							if (((Class) element).has_associationOfEndType()) {
 								Collection<Association> associations = ((Class) element).get_associationOfEndType();
 								for (Association association : associations) {
-									Collection<NamedElement> members = association.getMember();
-									for (NamedElement namedElement : members) {
-										/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "asociacija " + namedElement.getName());
-									}
+									List<Property> members = association.getMemberEnd();
+									Property obj = members.get(0);
+									Property inverse = members.get(1);
+									OwlApi.exportInverseObjectProperties(obj.getName(), inverse.getName());
 								}
 							}
-							// @TODO - export inverse object properties
-//							Association association = attribute.getAssociation();
-//							/* Debug */ JOptionPane.showMessageDialog(MDDialogParentProvider.getProvider().getDialogParent(), "");
-//							OwlApi.exportInverseObjectProperties(attributeName, attributeName + "2");
 						}
 						else if (element instanceof Association)
 						{
@@ -238,7 +236,8 @@ public class UmlToOwlAction extends MDAction {
 				Property property = properties.get(k);
 				if (StereotypesHelper.isElementStereotypedBy(property, stereotypeName)) {
 					String propertyName = property.getName();
-					String range = property.getType().getName();
+//					String range = property.getType().getName();
+					String range = getTagValue(property.getType(), Stereotypes.OWL_ENTITY, "EntityIRI");
 					String domain = getTagValue(property.getOwner(), Stereotypes.OWL_ENTITY, "EntityIRI");
 					OwlApi.exportObjectProperty(propertyName, range, domain);
 					if (!property.has_propertyOfSubsettedProperty()) {
