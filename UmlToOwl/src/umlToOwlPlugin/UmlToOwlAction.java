@@ -40,6 +40,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -95,7 +96,7 @@ public class UmlToOwlAction extends MDAction {
 								// export as a subclass
 								Collection<Class> superClass = ((Class) element).getSuperClass();
 								for (Class supClass : superClass) {
-									OwlApi.exportSubClass(getTagValue(element, Stereotypes.OWL_ENTITY, "EntityIRI"), getTagValue(supClass, Stereotypes.OWL_ENTITY, "EntityIRI")); 
+									OwlApi.exportSubClass(getTagValue(element, Stereotypes.OWL_CLASS, "EntityIRI"), getTagValue(supClass, Stereotypes.OWL_CLASS, "EntityIRI"));
 								}
 							} else {
 								/**
@@ -108,23 +109,20 @@ public class UmlToOwlAction extends MDAction {
 							if (((Class) element).hasGeneralization()) {
 								Collection<Generalization> generalizations = ((Class) element).getGeneralization();
 								for (Generalization generalization : generalizations) {
-									
 									if (hasSubClassStereotype( generalization)) {
 										if (generalization.hasGeneralizationSet()) {
 											Collection<GeneralizationSet> generalizationSet = generalization.getGeneralizationSet();
 											for (GeneralizationSet generalizationSet2 : generalizationSet) {
-												if (StereotypesHelper.hasStereotypeOrDerived(generalizationSet2, Stereotypes.PRIMITIVE)) {
 													if (generalizationSet2.isDisjoint()) {
 														ArrayList<String> disjointClasses= new ArrayList<String>();
 														Classifier general = null;
 														for (Generalization gen : generalizationSet2.getGeneralization()) {
-															String classIRI = getTagValue(gen.getSpecific(), Stereotypes.OWL_ENTITY, "EntityIRI");
+															String classIRI = getTagValue(gen.getSpecific(), Stereotypes.OWL_CLASS, "EntityIRI");
 															disjointClasses.add(classIRI);
 															general = gen.getGeneral();
 														};
-														OwlApi.exportDisJOintUnion(getTagValue(general, Stereotypes.OWL_ENTITY, "EntityIRI"), disjointClasses);
+														OwlApi.exportDisJOintUnion(getTagValue(general, Stereotypes.OWL_CLASS, "EntityIRI"), disjointClasses);
 													}
-												}
 											}
 										}										
 								}}
@@ -141,7 +139,18 @@ public class UmlToOwlAction extends MDAction {
 									List<Property> members = association.getMemberEnd();
 									Property obj = members.get(0);
 									Property inverse = members.get(1);
-									OwlApi.exportInverseObjectProperties(obj.getName(), inverse.getName());
+									String objIRI = getTagValue(obj, Stereotypes.OBJECT_PROPERTY, "EntityIRI");
+									String inverseIRI = getTagValue(inverse, Stereotypes.OBJECT_PROPERTY, "EntityIRI");
+									OwlApi.exportInverseObjectProperties(objIRI, inverseIRI);
+								}
+							}
+							
+							if (((Class) element).has_instanceSpecificationOfClassifier()) {
+								Collection<InstanceSpecification> instances = ((Class) element).get_instanceSpecificationOfClassifier();
+								for (InstanceSpecification instanceSpecification : instances) {
+									String classIRI = getTagValue(element, Stereotypes.OWL_CLASS, "EntityIRI");
+									// @TODO - send instanceSpecificationIRI instead of instanceSpecification.getName() 
+									OwlApi.exportNamedIndividuals(classIRI, instanceSpecification.getName());
 								}
 							}
 						}
@@ -200,10 +209,10 @@ public class UmlToOwlAction extends MDAction {
 			{
 				Property attribute = attributes.get(k);
 				if (StereotypesHelper.isElementStereotypedBy(attribute, stereotypeName)) {
-					String attributeName = attribute.getName();
+					String attributeIRI = getTagValue(attribute, Stereotypes.DATA_PROPERTY, "EntityIRI");
 					String range = attribute.getType().getName();
-					String domain = getTagValue(attribute.getOwner(), Stereotypes.OWL_ENTITY, "EntityIRI");
-					OwlApi.exportDataProperty(attributeName, range, domain);
+					String domain = getTagValue(attribute.getOwner(), Stereotypes.OWL_CLASS, "EntityIRI");
+					OwlApi.exportDataProperty(attributeIRI, range, domain);
 					if (!attribute.has_propertyOfSubsettedProperty()) {
 						exportSubsettedDataProperty(attribute);
 					}
@@ -219,7 +228,9 @@ public class UmlToOwlAction extends MDAction {
 	private void exportSubsettedDataProperty(Property attribute) {
 		Collection<Property> subsettedProperties = attribute.getSubsettedProperty();
 		for (Property subsettedProperty : subsettedProperties) {
-			OwlApi.exportSubDataPropertyOf(subsettedProperty.getName(), attribute.getName());
+			String subsettedPropertyIRI = getTagValue(subsettedProperty, Stereotypes.DATA_PROPERTY, "EntityIRI");
+			String attributeIRI = getTagValue(attribute, Stereotypes.DATA_PROPERTY, "EntityIRI");
+			OwlApi.exportSubDataPropertyOf(subsettedPropertyIRI, attributeIRI);
 		}
 	}
 	
@@ -235,14 +246,18 @@ public class UmlToOwlAction extends MDAction {
 			{
 				Property property = properties.get(k);
 				if (StereotypesHelper.isElementStereotypedBy(property, stereotypeName)) {
-					String propertyName = property.getName();
-//					String range = property.getType().getName();
-					String range = getTagValue(property.getType(), Stereotypes.OWL_ENTITY, "EntityIRI");
-					String domain = getTagValue(property.getOwner(), Stereotypes.OWL_ENTITY, "EntityIRI");
-					OwlApi.exportObjectProperty(propertyName, range, domain);
+					String propertyIRI = getTagValue(property, Stereotypes.OBJECT_PROPERTY, "EntityIRI");
+					String range = getTagValue(property.getType(), Stereotypes.OWL_CLASS, "EntityIRI");
+					String domain = getTagValue(property.getOwner(), Stereotypes.OWL_CLASS, "EntityIRI");
+					OwlApi.exportObjectProperty(propertyIRI, range, domain);
 					if (!property.has_propertyOfSubsettedProperty()) {
 						exportSubsettedObjectProperty(property);
 					}
+				}
+				
+				if (StereotypesHelper.isElementStereotypedBy(property, Stereotypes.FUNCTIONAL)) {
+					String propertyIRI = getTagValue(property, Stereotypes.OBJECT_PROPERTY, "EntityIRI");
+					OwlApi.exportFunctionalObjectProperty(propertyIRI);
 				}
 			}
 		}		
@@ -255,7 +270,9 @@ public class UmlToOwlAction extends MDAction {
 	private void exportSubsettedObjectProperty(Property property) {
 		Collection<Property> subsettedProperties = property.getSubsettedProperty();
 		for (Property subsettedProperty : subsettedProperties) {
-			OwlApi.exportSubObjectPropertyOf(subsettedProperty.getName(), property.getName());
+			String subsettedPropertyIRI = getTagValue(subsettedProperty, Stereotypes.OBJECT_PROPERTY, "EntityIRI");
+			String propertyIRI = getTagValue(property, Stereotypes.OBJECT_PROPERTY, "EntityIRI");
+			OwlApi.exportSubObjectPropertyOf(subsettedPropertyIRI, propertyIRI);
 		}
 	}
 	

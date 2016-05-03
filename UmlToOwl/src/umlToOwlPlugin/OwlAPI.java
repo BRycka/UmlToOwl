@@ -10,6 +10,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataProperty;
@@ -17,7 +18,9 @@ import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
+import org.semanticweb.owlapi.model.OWLFunctionalObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
@@ -103,8 +106,8 @@ public class OwlAPI {
 	 * @param range
 	 * @param domain
 	 */
-	public void exportDataProperty(String attributeName, String range, String domain) {
-		OWLDataProperty dProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + attributeName));
+	public void exportDataProperty(String attributeIRI, String range, String domain) {
+		OWLDataProperty dProperty = factory.getOWLDataProperty(IRI.create(attributeIRI));
 		OWLDataPropertyDomainAxiom domainAxiom = factory.getOWLDataPropertyDomainAxiom(dProperty, factory.getOWLClass(IRI.create(domain)));
 		OWLDataPropertyRangeAxiom rangeAxiom = factory.getOWLDataPropertyRangeAxiom(dProperty, factory.getOWLDatatype("xsd:" + range, new DefaultPrefixManager()));
 		manager.addAxiom(ontology, rangeAxiom);
@@ -118,8 +121,8 @@ public class OwlAPI {
 	 * @param range
 	 * @param domain
 	 */
-	public void exportObjectProperty(String propertyName, String range, String domain) {
-		OWLObjectProperty oProperty = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + propertyName));
+	public void exportObjectProperty(String propertyIRI, String range, String domain) {
+		OWLObjectProperty oProperty = factory.getOWLObjectProperty(IRI.create(propertyIRI));
 		OWLObjectPropertyDomainAxiom domainAxiom = factory.getOWLObjectPropertyDomainAxiom(oProperty, factory.getOWLClass(IRI.create(domain)));
 		OWLObjectPropertyRangeAxiom rangeAxiom = factory.getOWLObjectPropertyRangeAxiom(oProperty, factory.getOWLClass(IRI.create(range)));
 		manager.addAxiom(ontology, rangeAxiom);
@@ -132,9 +135,9 @@ public class OwlAPI {
 	 * @param subsettedProperty
 	 * @param attributeName
 	 */
-	public void exportSubDataPropertyOf(String subsettedProperty, String attributeName) {
-		OWLDataPropertyExpression subProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + attributeName));
-		OWLDataPropertyExpression superProperty = factory.getOWLDataProperty(IRI.create(ontoIRI + "#" + subsettedProperty));
+	public void exportSubDataPropertyOf(String subsettedPropertyIRI, String attributeIRI) {
+		OWLDataPropertyExpression subProperty = factory.getOWLDataProperty(IRI.create(attributeIRI));
+		OWLDataPropertyExpression superProperty = factory.getOWLDataProperty(IRI.create(subsettedPropertyIRI));
 		OWLSubDataPropertyOfAxiom axiom = factory.getOWLSubDataPropertyOfAxiom(subProperty, superProperty);
 		manager.addAxiom(ontology, axiom);
 	}
@@ -145,9 +148,9 @@ public class OwlAPI {
 	 * @param subsettedProperty
 	 * @param attributeName
 	 */
-	public void exportSubObjectPropertyOf(String subsettedProperty, String attributeName) {
-		OWLObjectPropertyExpression subProperty = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + attributeName));
-		OWLObjectPropertyExpression superProperty = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + subsettedProperty));
+	public void exportSubObjectPropertyOf(String subsettedPropertyIRI, String propertyIRI) {
+		OWLObjectPropertyExpression subProperty = factory.getOWLObjectProperty(IRI.create(propertyIRI));
+		OWLObjectPropertyExpression superProperty = factory.getOWLObjectProperty(IRI.create(subsettedPropertyIRI));
 		OWLSubObjectPropertyOfAxiom axiom = factory.getOWLSubObjectPropertyOfAxiom(subProperty, superProperty);
 		manager.addAxiom(ontology, axiom);
 	}
@@ -172,10 +175,36 @@ public class OwlAPI {
 	 * @param forwardProperty
 	 * @param inverseProperty
 	 */
-	public void exportInverseObjectProperties(String forwardProperty, String inverseProperty ) {
-		OWLObjectProperty forward = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + forwardProperty));
-		OWLObjectProperty inverse = factory.getOWLObjectProperty(IRI.create(ontoIRI + "#" + inverseProperty));
+	public void exportInverseObjectProperties(String objIRI, String inverseIRI ) {
+		OWLObjectProperty forward = factory.getOWLObjectProperty(IRI.create(objIRI));
+		OWLObjectProperty inverse = factory.getOWLObjectProperty(IRI.create(inverseIRI));
 		OWLInverseObjectPropertiesAxiom axiom = factory.getOWLInverseObjectPropertiesAxiom(forward, inverse);
+		manager.addAxiom(ontology, axiom);
+	}
+	
+	/**
+	 * Export named individuals
+	 * 
+	 * @param classIRI
+	 * @param instanceName
+	 */
+	public void exportNamedIndividuals(String classIRI, String instanceName) {
+		// @TODO - use instanceIRI instead of instanceName
+		OWLNamedIndividual individual = factory.getOWLNamedIndividual(IRI.create(ontoIRI + "#" + instanceName));
+		OWLClass classExpressions = factory.getOWLClass(IRI.create(classIRI));
+		OWLClassAssertionAxiom axiom = factory.getOWLClassAssertionAxiom(classExpressions, individual);
+		manager.addAxiom(ontology, axiom);
+	}
+	
+	/**
+	 * Export functional object properties
+	 * 
+	 * @param functional
+	 * @param objectPropertyIRI
+	 */
+	public void exportFunctionalObjectProperty(String objectPropertyIRI) {
+		OWLObjectProperty objProp = factory.getOWLObjectProperty(IRI.create(objectPropertyIRI));
+		OWLFunctionalObjectPropertyAxiom axiom = factory.getOWLFunctionalObjectPropertyAxiom(objProp);
 		manager.addAxiom(ontology, axiom);
 	}
 	
